@@ -9,17 +9,26 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Palet biru untuk background/elemen utama (Dark Mode)
         primary: {
-          blue: "#0F172A", // Slate 900 (Gelap)
-          light: "#1E293B", // Slate 800 (Lebih terang untuk card)
+          blue: "#0F172A",
+          light: "#1E293B",
         },
-        // Palet oranye untuk aksen, tombol, dan highlight
         accent: {
-          orange: "#F97316", // Orange 500
-          hover: "#EA580C", // Orange 600
+          orange: "#F97316",
+          hover: "#EA580C",
         }
       },
+      // === Pastikan Bagian Ini Ada ===
+      keyframes: {
+        marquee: {
+          '0%': { transform: 'translateX(0%)' },
+          '100%': { transform: 'translateX(-100%)' },
+        }
+      },
+      animation: {
+        marquee: 'marquee 35s linear infinite',
+      }
+      // === Sampai Sini ===
     },
   },
   plugins: [],

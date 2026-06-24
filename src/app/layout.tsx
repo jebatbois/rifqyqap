@@ -1,22 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Konfigurasi Font
+const spaceGrotesk = Space_Grotesk({ 
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ['300', '400', '500', '600', '700'], // Pilih ketebalan yang dibutuhkan
+  variable: '--font-space-grotesk', // Opsional, jika ingin dipanggil di Tailwind
 });
 
 export const metadata: Metadata = {
   title: "Rifqy - Portfolio",
-  description: "Personal portfolio showcasing my projects and skills",
+  description: "Personal portfolio of Rifqy",
 };
 
 export default function RootLayout({
@@ -25,14 +20,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-grow">{children}</main>
-        <Footer />
+    <html lang="en">
+      {/* Terapkan font ke seluruh body */}
+      <body className={`${spaceGrotesk.className} bg-primary-blue text-slate-200 antialiased`}>
+        {children}
       </body>
     </html>
   );
