@@ -1,112 +1,90 @@
-'use client';
-
-import Link from 'next/link';
-import { ArrowRight, Code, Zap, Target } from 'lucide-react';
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight, Code, Layout, Smartphone } from "lucide-react";
 
 export default function Home() {
-  const services = [
-    {
-      icon: Code,
-      title: 'Web Development',
-      description: 'Building modern, responsive web applications with React and Next.js',
-    },
-    {
-      icon: Zap,
-      title: 'Performance',
-      description: 'Optimizing applications for speed and efficiency',
-    },
-    {
-      icon: Target,
-      title: 'Solutions',
-      description: 'Creating effective solutions tailored to your needs',
-    },
-  ];
-
   return (
-    <div className="bg-white">
-      {/* Hero Section */}
-      <section className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="mb-8 flex justify-center">
-            <div className="w-32 h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-5xl font-bold">
-              R
+    // Menggunakan warna primary-blue dari tailwind.config.ts sebagai background
+    <main className="min-h-screen bg-primary-blue text-slate-200">
+      
+      {/* --- HERO SECTION --- */}
+      <section className="flex flex-col items-center justify-center pt-32 pb-24 px-6 text-center">
+        {/* Profile Image Wrapper */}
+        <div className="relative w-40 h-40 md:w-48 md:h-48 mb-8 rounded-full overflow-hidden border-4 border-accent-orange shadow-[0_0_30px_rgba(249,115,22,0.2)]">
+          {/* Pastikan kamu memasukkan foto wajahmu dengan nama 'profile.jpg' ke folder 'public' */}
+          <Image
+            src="/profile.jpg"
+            alt="Rifqy's Portrait"
+            fill
+            className="object-cover"
+            priority
+          />
+        </div>
+
+        {/* Greeting & Name */}
+        <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-4 tracking-tight">
+          Hi, I'm <span className="text-accent-orange">Rifqy</span>
+        </h1>
+        
+        {/* Short Tagline */}
+        <p className="text-lg md:text-xl text-slate-400 mb-10 max-w-2xl">
+          A passionate developer crafting beautiful, functional, and modern digital experiences.
+        </p>
+
+        {/* CTA Button */}
+        <Link
+          href="/about"
+          className="group flex items-center gap-2 bg-accent-orange hover:bg-accent-hover text-white px-8 py-3.5 rounded-full font-semibold transition-all duration-300 shadow-lg hover:shadow-accent-orange/50"
+        >
+          Learn more about me
+          <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" />
+        </Link>
+      </section>
+
+      {/* --- WHAT CAN I OFFER SECTION --- */}
+      <section className="py-20 px-6 bg-primary-light/30 border-t border-slate-800/50">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-center text-white mb-16">
+            What Can I Offer You
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Offer 1: Web Dev */}
+            <div className="bg-primary-light p-8 rounded-2xl border border-slate-700 hover:border-accent-orange/50 transition-all hover:-translate-y-1">
+              <div className="w-12 h-12 bg-accent-orange/10 rounded-xl flex items-center justify-center mb-6 text-accent-orange">
+                <Code className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Web Development</h3>
+              <p className="text-slate-400 leading-relaxed">
+                Building fast, responsive, and dynamic websites tailored to your specific needs using modern technologies.
+              </p>
+            </div>
+
+            {/* Offer 2: UI/UX */}
+            <div className="bg-primary-light p-8 rounded-2xl border border-slate-700 hover:border-accent-orange/50 transition-all hover:-translate-y-1">
+              <div className="w-12 h-12 bg-accent-orange/10 rounded-xl flex items-center justify-center mb-6 text-accent-orange">
+                <Layout className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">UI/UX Design</h3>
+              <p className="text-slate-400 leading-relaxed">
+                Crafting intuitive and visually appealing user interfaces focusing on best user experiences and accessibility.
+              </p>
+            </div>
+
+            {/* Offer 3: Responsive */}
+            <div className="bg-primary-light p-8 rounded-2xl border border-slate-700 hover:border-accent-orange/50 transition-all hover:-translate-y-1">
+              <div className="w-12 h-12 bg-accent-orange/10 rounded-xl flex items-center justify-center mb-6 text-accent-orange">
+                <Smartphone className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Responsive Design</h3>
+              <p className="text-slate-400 leading-relaxed">
+                Ensuring your web applications look great and function perfectly across all devices and screen sizes.
+              </p>
             </div>
           </div>
-          
-          <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 mb-4">
-            Hi, I'm <span className="text-blue-600">Rifqy</span>
-          </h1>
-          
-          <p className="text-xl sm:text-2xl text-gray-600 mb-8">
-            A passionate developer crafting digital experiences
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Link
-              href="/projects"
-              className="inline-flex items-center gap-2 bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition"
-            >
-              View My Work
-              <ArrowRight size={20} />
-            </Link>
-            
-            <Link
-              href="/contact"
-              className="inline-flex items-center gap-2 border-2 border-blue-600 text-blue-600 px-8 py-3 rounded-lg hover:bg-blue-50 transition"
-            >
-              Get In Touch
-            </Link>
-          </div>
         </div>
       </section>
-
-      {/* What Can I Offer Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-12 text-gray-900">
-            What Can I Offer
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {services.map((service, index) => {
-              const Icon = service.icon;
-              return (
-                <div
-                  key={index}
-                  className="bg-white p-8 rounded-lg shadow hover:shadow-lg transition"
-                >
-                  <div className="flex justify-center mb-4">
-                    <Icon size={32} className="text-blue-600" />
-                  </div>
-                  
-                  <h3 className="text-xl font-semibold text-center mb-3 text-gray-900">
-                    {service.title}
-                  </h3>
-                  
-                  <p className="text-gray-600 text-center">
-                    {service.description}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-}
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      
+    </main>
   );
 }
