@@ -5,7 +5,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { 
   Lock, Mail, Key, LogOut, MessageSquare, LayoutDashboard, 
-  Briefcase, Code, Award, Loader2, Eye, EyeOff, Trash2, CheckCircle, Circle
+  Briefcase, Code, Award, Loader2, Eye, EyeOff, Trash2, CheckCircle, Circle,
+  Plus, Edit3, X
 } from "lucide-react";
 
 interface Message {
@@ -15,6 +16,48 @@ interface Message {
   message: string;
   is_read: boolean;
   created_at: string;
+}
+
+interface Project {
+  id: number;
+  title: string;
+  description: string;
+  tech_stack: string[];
+  image_url: string;
+  live_url: string;
+  repo_url: string;
+  featured: boolean;
+  created_at: string;
+}
+
+interface Skill {
+  id: number;
+  name: string;
+  category: string;
+  icon_name: string;
+  created_at: string;
+}
+
+// Experience interface as specified in the requirements
+interface Experience {
+  id: number;
+  role: string;
+  company: string;
+  location: string;
+  start_date: string;
+  end_date: string | null;
+  is_current: boolean;
+  description: string;
+}
+
+// Certificate interface as specified in the requirements
+interface Certificate {
+  id: number;
+  title: string;
+  credential_provider: string;
+  issue_date: string;
+  credential_url: string;
+  image_url: string | null;
 }
 
 export default function AdminPage() {
@@ -30,6 +73,73 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("messages");
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(true);
+
+  // --- Projects States ---
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState(true);
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [currentEditingProject, setCurrentEditingProject] = useState<Project | null>(null);
+  const [projectForm, setProjectForm] = useState({
+    title: "",
+    description: "",
+    tech_stack: "",
+    image_url: "",
+    live_url: "",
+    repo_url: "",
+    featured: false
+  });
+
+  // --- Skills States ---
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [loadingSkills, setLoadingSkills] = useState(true);
+  const [isSkillModalOpen, setIsSkillModalOpen] = useState(false);
+  const [currentEditingSkill, setCurrentEditingSkill] = useState<Skill | null>(null);
+  const [skillForm, setSkillForm] = useState({
+    name: "",
+    category: "",
+    icon_name: ""
+  });
+
+  // --- Experiences States ---
+  const [experiences, setExperiences] = useState<Experience[]>([]);
+  const [loadingExperiences, setLoadingExperiences] = useState(true);
+  const [experiencesError, setExperiencesError] = useState<string>("");
+  const [isExperienceModalOpen, setIsExperienceModalOpen] = useState(false);
+  const [currentEditingExperience, setCurrentEditingExperience] = useState<Experience | null>(null);
+  const [experienceForm, setExperienceForm] = useState({
+    role: "",
+    company: "",
+    location: "",
+    start_date: "",
+    end_date: "",
+    is_current: false,
+    description: ""
+  });
+
+  // --- Certificates States ---
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [loadingCertificates, setLoadingCertificates] = useState(true);
+  const [isCertificateModalOpen, setIsCertificateModalOpen] = useState(false);
+  const [currentEditingCertificate, setCurrentEditingCertificate] = useState<Certificate | null>(null);
+  const [certificateForm, setCertificateForm] = useState({
+    title: "",
+    credential_provider: "",
+    issue_date: "",
+    credential_url: "",
+    image_url: ""
+  });
+
+  // Static categories for skills
+  const skillCategories = [
+    'frontend', 
+    'backend', 
+    'database', 
+    'devops', 
+    'design tools', 
+    'version control', 
+    'data & machine learning', 
+    'soft skills'
+  ];
 
   // Cek sesi login saat halaman dimuat
   useEffect(() => {
@@ -67,6 +177,34 @@ export default function AdminPage() {
     }
   }, [activeTab, session]);
 
+  // Fetch projects when activeTab changes to 'projects'
+  useEffect(() => {
+    if (activeTab === "projects" && session) {
+      fetchProjects();
+    }
+  }, [activeTab, session]);
+
+  // Fetch skills when activeTab changes to 'skills'
+  useEffect(() => {
+    if (activeTab === "skills" && session) {
+      fetchSkills();
+    }
+  }, [activeTab, session]);
+
+  // Fetch experiences when activeTab changes to 'experiences'
+  useEffect(() => {
+    if (activeTab === "experiences" && session) {
+      fetchExperiences();
+    }
+  }, [activeTab, session]);
+
+  // Fetch certificates when activeTab changes to 'certificates'
+  useEffect(() => {
+    if (activeTab === "certificates" && session) {
+      fetchCertificates();
+    }
+  }, [activeTab, session]);
+
   // Function to fetch messages from Supabase
   const fetchMessages = async () => {
     try {
@@ -83,6 +221,86 @@ export default function AdminPage() {
       console.error("Error fetching messages:", error.message);
     } finally {
       setLoadingMessages(false);
+    }
+  };
+
+  // Function to fetch projects from Supabase
+  const fetchProjects = async () => {
+    try {
+      setLoadingProjects(true);
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setProjects(data || []);
+    } catch (error: any) {
+      console.error("Error fetching projects:", error.message);
+    } finally {
+      setLoadingProjects(false);
+    }
+  };
+
+  // Function to fetch skills from Supabase
+  const fetchSkills = async () => {
+    try {
+      setLoadingSkills(true);
+      const { data, error } = await supabase
+        .from('skills')
+        .select('*')
+        .order('category', { ascending: true });
+
+      if (error) throw error;
+
+      setSkills(data || []);
+    } catch (error: any) {
+      console.error("Error fetching skills:", error.message);
+    } finally {
+      setLoadingSkills(false);
+    }
+  };
+
+  // Function to fetch experiences from Supabase
+  const fetchExperiences = async () => {
+    try {
+      setLoadingExperiences(true);
+      setExperiencesError("");
+
+      const { data, error } = await supabase
+        .from('experiences')
+        .select('*')
+        .order('start_date', { ascending: false });
+
+      if (error) throw error;
+
+      setExperiences(data || []);
+    } catch (error: any) {
+      const message = error?.message || "Failed to load experiences.";
+      console.error("Error fetching experiences:", message);
+      setExperiencesError(message);
+    } finally {
+      setLoadingExperiences(false);
+    }
+  };
+
+  // Function to fetch certificates from Supabase
+  const fetchCertificates = async () => {
+    try {
+      setLoadingCertificates(true);
+      const { data, error } = await supabase
+        .from('certificates')
+        .select('*')
+        .order('issue_date', { ascending: false });
+
+      if (error) throw error;
+
+      setCertificates(data || []);
+    } catch (error: any) {
+      console.error("Error fetching certificates:", error.message);
+    } finally {
+      setLoadingCertificates(false);
     }
   };
 
@@ -119,6 +337,586 @@ export default function AdminPage() {
       setMessages(messages.filter(msg => msg.id !== id));
     } catch (error: any) {
       console.error("Error deleting message:", error.message);
+    }
+  };
+
+  // Function to handle project form input changes
+  const handleProjectFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    
+    if (type === 'checkbox') {
+      const target = e.target as HTMLInputElement;
+      setProjectForm(prev => ({
+        ...prev,
+        [name]: target.checked
+      }));
+    } else {
+      setProjectForm(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+  };
+
+  // Function to handle skill form input changes
+  const handleSkillFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setSkillForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Function to open modal for adding new project
+  const openNewProjectModal = () => {
+    setCurrentEditingProject(null);
+    setProjectForm({
+      title: "",
+      description: "",
+      tech_stack: "",
+      image_url: "",
+      live_url: "",
+      repo_url: "",
+      featured: false
+    });
+    setIsProjectModalOpen(true);
+  };
+
+  // Function to open modal for editing project
+  const openEditProjectModal = (project: Project) => {
+    setCurrentEditingProject(project);
+    setProjectForm({
+      title: project.title,
+      description: project.description,
+      tech_stack: Array.isArray(project.tech_stack) ? project.tech_stack.join(', ') : project.tech_stack,
+      image_url: project.image_url,
+      live_url: project.live_url,
+      repo_url: project.repo_url,
+      featured: project.featured
+    });
+    setIsProjectModalOpen(true);
+  };
+
+  // Function to open modal for adding new skill
+  const openNewSkillModal = () => {
+    setCurrentEditingSkill(null);
+    setSkillForm({
+      name: "",
+      category: skillCategories[0], // Default to first category
+      icon_name: ""
+    });
+    setIsSkillModalOpen(true);
+  };
+
+  // Function to open modal for editing skill
+  const openEditSkillModal = (skill: Skill) => {
+    setCurrentEditingSkill(skill);
+    setSkillForm({
+      name: skill.name,
+      category: skill.category,
+      icon_name: skill.icon_name
+    });
+    setIsSkillModalOpen(true);
+  };
+
+  // Function to close project modal
+  const closeProjectModal = () => {
+    setIsProjectModalOpen(false);
+    setCurrentEditingProject(null);
+    setProjectForm({
+      title: "",
+      description: "",
+      tech_stack: "",
+      image_url: "",
+      live_url: "",
+      repo_url: "",
+      featured: false
+    });
+  };
+
+  // Function to close skill modal
+  const closeSkillModal = () => {
+    setIsSkillModalOpen(false);
+    setCurrentEditingSkill(null);
+    setSkillForm({
+      name: "",
+      category: skillCategories[0],
+      icon_name: ""
+    });
+  };
+
+  // Function to submit project form
+  const submitProjectForm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      // Basic validation
+      if (!projectForm.title.trim()) {
+        alert("Title is required");
+        return;
+      }
+      
+      if (!projectForm.description.trim()) {
+        alert("Description is required");
+        return;
+      }
+      
+      // Parse tech stack as array
+      const techStackArray = projectForm.tech_stack.split(',').map(tag => tag.trim()).filter(tag => tag);
+      
+      if (currentEditingProject) {
+        // Update existing project
+        const { error } = await supabase
+          .from('projects')
+          .update({
+            title: projectForm.title,
+            description: projectForm.description,
+            tech_stack: techStackArray,
+            image_url: projectForm.image_url,
+            live_url: projectForm.live_url,
+            repo_url: projectForm.repo_url,
+            featured: projectForm.featured
+          })
+          .eq('id', currentEditingProject.id);
+
+        if (error) throw error;
+        
+        alert("Project updated successfully!");
+      } else {
+        // Create new project
+        const { error } = await supabase
+          .from('projects')
+          .insert([{
+            title: projectForm.title,
+            description: projectForm.description,
+            tech_stack: techStackArray,
+            image_url: projectForm.image_url,
+            live_url: projectForm.live_url,
+            repo_url: projectForm.repo_url,
+            featured: projectForm.featured
+          }]);
+
+        if (error) throw error;
+        
+        alert("Project added successfully!");
+      }
+      
+      // Refresh projects list and close modal
+      await fetchProjects();
+      closeProjectModal();
+    } catch (error: any) {
+      console.error("Error saving project:", error.message);
+      alert(`Error saving project: ${error.message}`);
+    }
+  };
+
+  // Function to submit skill form
+  const submitSkillForm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      // Basic validation
+      if (!skillForm.name.trim()) {
+        alert("Skill name is required");
+        return;
+      }
+      
+      if (!skillForm.category.trim()) {
+        alert("Category is required");
+        return;
+      }
+      
+      if (!skillForm.icon_name.trim()) {
+        alert("Icon name is required");
+        return;
+      }
+      
+      if (currentEditingSkill) {
+        // Update existing skill
+        const { error } = await supabase
+          .from('skills')
+          .update({
+            name: skillForm.name,
+            category: skillForm.category,
+            icon_name: skillForm.icon_name
+          })
+          .eq('id', currentEditingSkill.id);
+
+        if (error) throw error;
+        
+        alert("Skill updated successfully!");
+      } else {
+        // Create new skill
+        const { error } = await supabase
+          .from('skills')
+          .insert([{
+            name: skillForm.name,
+            category: skillForm.category,
+            icon_name: skillForm.icon_name
+          }]);
+
+        if (error) throw error;
+        
+        alert("Skill added successfully!");
+      }
+      
+      // Refresh skills list and close modal
+      await fetchSkills();
+      closeSkillModal();
+    } catch (error: any) {
+      console.error("Error saving skill:", error.message);
+      alert(`Error saving skill: ${error.message}`);
+    }
+  };
+
+  // Function to delete project
+  const deleteProject = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this project?")) {
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      // Refresh projects list
+      await fetchProjects();
+      alert("Project deleted successfully!");
+    } catch (error: any) {
+      console.error("Error deleting project:", error.message);
+      alert(`Error deleting project: ${error.message}`);
+    }
+  };
+
+  // Function to delete skill
+  const deleteSkill = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this skill?")) {
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('skills')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      // Refresh skills list
+      await fetchSkills();
+      alert("Skill deleted successfully!");
+    } catch (error: any) {
+      console.error("Error deleting skill:", error.message);
+      alert(`Error deleting skill: ${error.message}`);
+    }
+  };
+
+  // Function to handle experience form input changes
+  const handleExperienceFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    
+    if (type === 'checkbox') {
+      const target = e.target as HTMLInputElement;
+      setExperienceForm(prev => ({
+        ...prev,
+        [name]: target.checked,
+        // If is_current is checked, clear end_date
+        ...(name === 'is_current' && target.checked ? { end_date: '' } : {})
+      }));
+    } else {
+      setExperienceForm(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+  };
+
+  // Function to open modal for adding new experience
+  const openNewExperienceModal = () => {
+    setCurrentEditingExperience(null);
+    setExperienceForm({
+      role: "",
+      company: "",
+      location: "",
+      start_date: "",
+      end_date: "",
+      is_current: false,
+      description: ""
+    });
+    setIsExperienceModalOpen(true);
+  };
+
+  // Function to open modal for editing experience
+  const openEditExperienceModal = (experience: Experience) => {
+    setCurrentEditingExperience(experience);
+    setExperienceForm({
+      role: experience.role,
+      company: experience.company,
+      location: experience.location,
+      start_date: experience.start_date,
+      end_date: experience.end_date || "",
+      is_current: experience.is_current,
+      description: experience.description
+    });
+    setIsExperienceModalOpen(true);
+  };
+
+  // Function to close experience modal
+  const closeExperienceModal = () => {
+    setIsExperienceModalOpen(false);
+    setCurrentEditingExperience(null);
+    setExperienceForm({
+      role: "",
+      company: "",
+      location: "",
+      start_date: "",
+      end_date: "",
+      is_current: false,
+      description: ""
+    });
+  };
+
+  // Function to submit experience form
+  const submitExperienceForm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      // Basic validation
+      if (!experienceForm.role.trim()) {
+        alert("Role is required");
+        return;
+      }
+      
+      if (!experienceForm.company.trim()) {
+        alert("Company is required");
+        return;
+      }
+      
+      if (!experienceForm.location.trim()) {
+        alert("Location is required");
+        return;
+      }
+      
+      if (!experienceForm.start_date.trim()) {
+        alert("Start date is required");
+        return;
+      }
+      
+      // Validate dates
+      if (!experienceForm.is_current && !experienceForm.end_date.trim()) {
+        alert("End date is required when not currently working here");
+        return;
+      }
+      
+      if (!experienceForm.is_current && experienceForm.end_date && new Date(experienceForm.start_date) > new Date(experienceForm.end_date)) {
+        alert("End date must be after start date");
+        return;
+      }
+      
+      if (currentEditingExperience) {
+        // Update existing experience
+        const { error } = await supabase
+          .from('experiences')
+          .update({
+            role: experienceForm.role,
+            company: experienceForm.company,
+            location: experienceForm.location,
+            start_date: experienceForm.start_date,
+            end_date: experienceForm.is_current ? null : experienceForm.end_date || null,
+            is_current: experienceForm.is_current,
+            description: experienceForm.description
+          })
+          .eq('id', currentEditingExperience.id);
+
+        if (error) throw error;
+        
+        alert("Experience updated successfully!");
+      } else {
+        // Create new experience
+        const { error } = await supabase
+          .from('experiences')
+          .insert([{
+            role: experienceForm.role,
+            company: experienceForm.company,
+            location: experienceForm.location,
+            start_date: experienceForm.start_date,
+            end_date: experienceForm.is_current ? null : experienceForm.end_date || null,
+            is_current: experienceForm.is_current,
+            description: experienceForm.description
+          }]);
+
+        if (error) throw error;
+        
+        alert("Experience added successfully!");
+      }
+      
+      // Refresh experiences list and close modal
+      await fetchExperiences();
+      closeExperienceModal();
+    } catch (error: any) {
+      console.error("Error saving experience:", error.message);
+      alert(`Error saving experience: ${error.message}`);
+    }
+  };
+
+  // Function to delete experience
+  const deleteExperience = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this experience?")) {
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('experiences')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      // Refresh experiences list
+      await fetchExperiences();
+      alert("Experience deleted successfully!");
+    } catch (error: any) {
+      console.error("Error deleting experience:", error.message);
+      alert(`Error deleting experience: ${error.message}`);
+    }
+  };
+
+  // Function to handle certificate form input changes
+  const handleCertificateFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setCertificateForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Function to open modal for adding new certificate
+  const openNewCertificateModal = () => {
+    setCurrentEditingCertificate(null);
+    setCertificateForm({
+      title: "",
+      credential_provider: "",
+      issue_date: "",
+      credential_url: "",
+      image_url: ""
+    });
+    setIsCertificateModalOpen(true);
+  };
+
+  // Function to open modal for editing certificate
+  const openEditCertificateModal = (certificate: Certificate) => {
+    setCurrentEditingCertificate(certificate);
+    setCertificateForm({
+      title: certificate.title,
+      credential_provider: certificate.credential_provider,
+      issue_date: certificate.issue_date,
+      credential_url: certificate.credential_url,
+      image_url: certificate.image_url || ""
+    });
+    setIsCertificateModalOpen(true);
+  };
+
+  // Function to close certificate modal
+  const closeCertificateModal = () => {
+    setIsCertificateModalOpen(false);
+    setCurrentEditingCertificate(null);
+    setCertificateForm({
+      title: "",
+      credential_provider: "",
+      issue_date: "",
+      credential_url: "",
+      image_url: ""
+    });
+  };
+
+  // Function to submit certificate form
+  const submitCertificateForm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      // Basic validation
+      if (!certificateForm.title.trim()) {
+        alert("Certificate title is required");
+        return;
+      }
+      
+      if (!certificateForm.credential_provider.trim()) {
+        alert("Credential provider is required");
+        return;
+      }
+      
+      if (!certificateForm.issue_date.trim()) {
+        alert("Issue date is required");
+        return;
+      }
+      
+      if (currentEditingCertificate) {
+        // Update existing certificate
+        const { error } = await supabase
+          .from('certificates')
+          .update({
+            title: certificateForm.title,
+            credential_provider: certificateForm.credential_provider,
+            issue_date: certificateForm.issue_date,
+            credential_url: certificateForm.credential_url,
+            image_url: certificateForm.image_url || null
+          })
+          .eq('id', currentEditingCertificate.id);
+
+        if (error) throw error;
+        
+        alert("Certificate updated successfully!");
+      } else {
+        // Create new certificate
+        const { error } = await supabase
+          .from('certificates')
+          .insert([{
+            title: certificateForm.title,
+            credential_provider: certificateForm.credential_provider,
+            issue_date: certificateForm.issue_date,
+            credential_url: certificateForm.credential_url,
+            image_url: certificateForm.image_url || null
+          }]);
+
+        if (error) throw error;
+        
+        alert("Certificate added successfully!");
+      }
+      
+      // Refresh certificates list and close modal
+      await fetchCertificates();
+      closeCertificateModal();
+    } catch (error: any) {
+      console.error("Error saving certificate:", error.message);
+      alert(`Error saving certificate: ${error.message}`);
+    }
+  };
+
+  // Function to delete certificate
+  const deleteCertificate = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this certificate?")) {
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('certificates')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      // Refresh certificates list
+      await fetchCertificates();
+      alert("Certificate deleted successfully!");
+    } catch (error: any) {
+      console.error("Error deleting certificate:", error.message);
+      alert(`Error deleting certificate: ${error.message}`);
     }
   };
 
@@ -359,8 +1157,320 @@ export default function AdminPage() {
                </div>
              )}
              
+             {/* Projects Tab Content */}
+             {activeTab === "projects" && (
+               <div className="overflow-x-auto">
+                 {loadingProjects ? (
+                   <div className="flex flex-col items-center justify-center py-12">
+                     <Loader2 className="w-10 h-10 mb-4 text-accent-orange animate-spin" />
+                     <p className="text-slate-400">Loading projects...</p>
+                   </div>
+                 ) : (
+                   <>
+                     <div className="mb-6">
+                       <button 
+                         onClick={openNewProjectModal}
+                         className="py-2.5 px-4 bg-accent-orange hover:bg-accent-hover text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-accent-orange/30 flex items-center gap-2"
+                       >
+                         <Plus className="w-4 h-4" />
+                         Add New Project
+                       </button>
+                     </div>
+                     
+                     <table className="min-w-full divide-y divide-slate-700">
+                       <thead>
+                         <tr>
+                           <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Title</th>
+                           <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Tech Stack</th>
+                           <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Featured</th>
+                           <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Date</th>
+                           <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Actions</th>
+                         </tr>
+                       </thead>
+                       <tbody className="divide-y divide-slate-700">
+                         {projects.length > 0 ? (
+                           projects.map((project) => (
+                             <tr key={project.id}>
+                               <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-white">{project.title}</td>
+                               <td className="px-4 py-4 text-sm text-slate-300">{Array.isArray(project.tech_stack) ? project.tech_stack.join(', ') : project.tech_stack}</td>
+                               <td className="px-4 py-4 whitespace-nowrap text-sm">
+                                 {project.featured ? (
+                                   <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-medium">Yes</span>
+                                 ) : (
+                                   <span className="px-2 py-1 bg-slate-600 text-slate-400 rounded-full text-xs font-medium">No</span>
+                                 )}
+                               </td>
+                               <td className="px-4 py-4 whitespace-nowrap text-sm text-slate-400">
+                                 {new Date(project.created_at).toLocaleDateString()}
+                               </td>
+                               <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                                 <div className="flex items-center space-x-2">
+                                   <button
+                                     onClick={() => openEditProjectModal(project)}
+                                     className="text-accent-orange hover:text-accent-hover transition-colors"
+                                     title="Edit project"
+                                   >
+                                     <Edit3 className="w-5 h-5" />
+                                   </button>
+                                   <button
+                                     onClick={() => deleteProject(project.id)}
+                                     className="text-red-400 hover:text-red-300 transition-colors"
+                                     title="Delete project"
+                                   >
+                                     <Trash2 className="w-5 h-5" />
+                                   </button>
+                                 </div>
+                               </td>
+                             </tr>
+                           ))
+                         ) : (
+                           <tr>
+                             <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                               No projects found
+                             </td>
+                           </tr>
+                         )}
+                       </tbody>
+                     </table>
+                   </>
+                 )}
+               </div>
+             )}
+             
+             {/* Skills Tab Content */}
+             {activeTab === "skills" && (
+               <div className="overflow-x-auto">
+                 {loadingSkills ? (
+                   <div className="flex flex-col items-center justify-center py-12">
+                     <Loader2 className="w-10 h-10 mb-4 text-accent-orange animate-spin" />
+                     <p className="text-slate-400">Loading skills...</p>
+                   </div>
+                 ) : (
+                   <>
+                     <div className="mb-6">
+                       <button 
+                         onClick={openNewSkillModal}
+                         className="py-2.5 px-4 bg-accent-orange hover:bg-accent-hover text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-accent-orange/30 flex items-center gap-2"
+                       >
+                         <Plus className="w-4 h-4" />
+                         Add New Skill
+                       </button>
+                     </div>
+                     
+                     {/* Group skills by category */}
+                     {skillCategories.map(category => {
+                       const categorySkills = skills.filter(skill => skill.category === category);
+                       if (categorySkills.length === 0) return null;
+                       
+                       return (
+                         <div key={category} className="mb-8">
+                           <h3 className="text-lg font-semibold text-white mb-4 capitalize">{category}</h3>
+                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                             {categorySkills.map(skill => (
+                               <div 
+                                 key={skill.id} 
+                                 className="bg-primary-blue p-4 rounded-lg border border-slate-700 flex justify-between items-center"
+                               >
+                                 <div>
+                                   <h4 className="font-medium text-white">{skill.name}</h4>
+                                   <p className="text-sm text-slate-400">{skill.icon_name}</p>
+                                 </div>
+                                 <div className="flex items-center space-x-2">
+                                   <button
+                                     onClick={() => openEditSkillModal(skill)}
+                                     className="text-accent-orange hover:text-accent-hover transition-colors"
+                                     title="Edit skill"
+                                   >
+                                     <Edit3 className="w-5 h-5" />
+                                   </button>
+                                   <button
+                                     onClick={() => deleteSkill(skill.id)}
+                                     className="text-red-400 hover:text-red-300 transition-colors"
+                                     title="Delete skill"
+                                   >
+                                     <Trash2 className="w-5 h-5" />
+                                   </button>
+                                 </div>
+                               </div>
+                             ))}
+                           </div>
+                         </div>
+                       );
+                     })}
+                     
+                     {/* Show categories with no skills */}
+                     {skillCategories.filter(category => !skills.some(skill => skill.category === category)).map(category => (
+                       <div key={category} className="mb-8">
+                         <h3 className="text-lg font-semibold text-white mb-4 capitalize">{category}</h3>
+                         <div className="text-center py-8 text-slate-500">
+                           No skills in this category yet
+                         </div>
+                       </div>
+                     ))}
+                   </>
+                 )}
+               </div>
+             )}
+             
+             {/* Experiences Tab Content */}
+             {activeTab === "experiences" && (
+               <div className="overflow-x-auto">
+                 {loadingExperiences ? (
+                   <div className="flex flex-col items-center justify-center py-12">
+                     <Loader2 className="w-10 h-10 mb-4 text-accent-orange animate-spin" />
+                     <p className="text-slate-400">Loading experiences...</p>
+                   </div>
+                 ) : experiencesError ? (
+                   <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-6 text-center text-red-200">
+                     <p className="font-semibold mb-2">Unable to load experiences.</p>
+                     <p className="text-sm text-red-100">{experiencesError}</p>
+                     <button
+                       onClick={fetchExperiences}
+                       className="mt-4 inline-flex items-center justify-center rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-400 transition"
+                     >
+                       Retry
+                     </button>
+                   </div>
+                 ) : (
+                   <>
+                     <div className="mb-6">
+                       <button 
+                         onClick={openNewExperienceModal}
+                         className="py-2.5 px-4 bg-accent-orange hover:bg-accent-hover text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-accent-orange/30 flex items-center gap-2"
+                       >
+                         <Plus className="w-4 h-4" />
+                         Add New Experience
+                       </button>
+                     </div>
+                     
+                     <table className="min-w-full divide-y divide-slate-700">
+                       <thead>
+                         <tr>
+                           <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Role</th>
+                           <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Company</th>
+                           <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Location</th>
+                           <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Duration</th>
+                           <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Actions</th>
+                         </tr>
+                       </thead>
+                       <tbody className="divide-y divide-slate-700">
+                         {experiences.length > 0 ? (
+                           experiences.map((exp) => (
+                             <tr key={exp.id}>
+                               <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-white">{exp.role}</td>
+                               <td className="px-4 py-4 text-sm text-slate-300">{exp.company}</td>
+                               <td className="px-4 py-4 text-sm text-slate-300">{exp.location}</td>
+                               <td className="px-4 py-4 whitespace-nowrap text-sm text-slate-300">
+                                 {new Date(exp.start_date).toLocaleDateString()} - {exp.is_current ? "Present" : exp.end_date ? new Date(exp.end_date).toLocaleDateString() : "N/A"}
+                               </td>
+                               <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                                 <div className="flex items-center space-x-2">
+                                   <button
+                                     onClick={() => openEditExperienceModal(exp)}
+                                     className="text-accent-orange hover:text-accent-hover transition-colors"
+                                     title="Edit experience"
+                                   >
+                                     <Edit3 className="w-5 h-5" />
+                                   </button>
+                                   <button
+                                     onClick={() => deleteExperience(exp.id)}
+                                     className="text-red-400 hover:text-red-300 transition-colors"
+                                     title="Delete experience"
+                                   >
+                                     <Trash2 className="w-5 h-5" />
+                                   </button>
+                                 </div>
+                               </td>
+                             </tr>
+                           ))
+                         ) : (
+                           <tr>
+                             <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                               No experiences found
+                             </td>
+                           </tr>
+                         )}
+                       </tbody>
+                     </table>
+                   </>
+                 )}
+               </div>
+             )}
+             
+             {/* Certificates Tab Content */}
+             {activeTab === "certificates" && (
+               <div className="overflow-x-auto">
+                 {loadingCertificates ? (
+                   <div className="flex flex-col items-center justify-center py-12">
+                     <Loader2 className="w-10 h-10 mb-4 text-accent-orange animate-spin" />
+                     <p className="text-slate-400">Loading certificates...</p>
+                   </div>
+                 ) : (
+                   <>
+                     <div className="mb-6">
+                       <button 
+                         onClick={openNewCertificateModal}
+                         className="py-2.5 px-4 bg-accent-orange hover:bg-accent-hover text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-accent-orange/30 flex items-center gap-2"
+                       >
+                         <Plus className="w-4 h-4" />
+                         Add New Certificate
+                       </button>
+                     </div>
+                     
+                     <table className="min-w-full divide-y divide-slate-700">
+                       <thead>
+                         <tr>
+                           <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Title</th>
+                           <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Credential Provider</th>
+                           <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Issue Date</th>
+                           <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Actions</th>
+                         </tr>
+                       </thead>
+                       <tbody className="divide-y divide-slate-700">
+                         {certificates.length > 0 ? (
+                           certificates.map((cert) => (
+                             <tr key={cert.id}>
+                               <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-white">{cert.title}</td>
+                               <td className="px-4 py-4 text-sm text-slate-300">{cert.credential_provider}</td>
+                               <td className="px-4 py-4 whitespace-nowrap text-sm text-slate-300">
+                                 {new Date(cert.issue_date).toLocaleDateString()}
+                               </td>
+                               <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                                 <div className="flex items-center space-x-2">
+                                   <button
+                                     onClick={() => openEditCertificateModal(cert)}
+                                     className="text-accent-orange hover:text-accent-hover transition-colors"
+                                     title="Edit certificate"
+                                   >
+                                     <Edit3 className="w-5 h-5" />
+                                   </button>
+                                   <button
+                                     onClick={() => deleteCertificate(cert.id)}
+                                     className="text-red-400 hover:text-red-300 transition-colors"
+                                     title="Delete certificate"
+                                   >
+                                     <Trash2 className="w-5 h-5" />
+                                   </button>
+                                 </div>
+                               </td>
+                             </tr>
+                           ))
+                         ) : (
+                           <tr>
+                             <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
+                               No certificates found
+                             </td>
+                           </tr>
+                         )}
+                       </tbody>
+                     </table>
+                   </>
+                 )}
+               </div>
+             )}
+             
              {/* Placeholder for other tabs */}
-             {activeTab !== "messages" && (
+             {activeTab !== "messages" && activeTab !== "projects" && activeTab !== "skills" && activeTab !== "experiences" && activeTab !== "certificates" && (
                <div className="p-8 border-2 border-dashed border-slate-700 rounded-xl text-center flex flex-col items-center justify-center text-slate-500">
                  <Loader2 className="w-10 h-10 mb-4 text-slate-600 animate-spin" />
                  <p>Modul <strong className="text-slate-400 capitalize">{activeTab}</strong> sedang disiapkan...</p>
@@ -370,6 +1480,450 @@ export default function AdminPage() {
         </main>
 
       </div>
+      
+      {/* Project Modal */}
+      {isProjectModalOpen && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-primary-light rounded-2xl border border-slate-700 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-white">
+                  {currentEditingProject ? "Edit Project" : "Add New Project"}
+                </h3>
+                <button 
+                  onClick={closeProjectModal}
+                  className="text-slate-400 hover:text-white transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <form onSubmit={submitProjectForm} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-300 mb-1">Title *</label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={projectForm.title}
+                    onChange={handleProjectFormChange}
+                    className="w-full px-4 py-2.5 bg-primary-blue rounded-lg border border-slate-700 focus:border-accent-orange focus:ring-1 focus:ring-accent-orange outline-none text-white transition-all"
+                    placeholder="Project title"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-slate-300 mb-1">Description *</label>
+                  <textarea
+                    name="description"
+                    value={projectForm.description}
+                    onChange={handleProjectFormChange}
+                    className="w-full px-4 py-2.5 bg-primary-blue rounded-lg border border-slate-700 focus:border-accent-orange focus:ring-1 focus:ring-accent-orange outline-none text-white transition-all min-h-[100px]"
+                    placeholder="Project description"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-slate-300 mb-1">Tech Stack</label>
+                  <input
+                    type="text"
+                    name="tech_stack"
+                    value={projectForm.tech_stack}
+                    onChange={handleProjectFormChange}
+                    className="w-full px-4 py-2.5 bg-primary-blue rounded-lg border border-slate-700 focus:border-accent-orange focus:ring-1 focus:ring-accent-orange outline-none text-white transition-all"
+                    placeholder="e.g., React, TypeScript, Tailwind CSS (comma separated)"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-slate-300 mb-1">Image URL</label>
+                  <input
+                    type="text"
+                    name="image_url"
+                    value={projectForm.image_url}
+                    onChange={handleProjectFormChange}
+                    className="w-full px-4 py-2.5 bg-primary-blue rounded-lg border border-slate-700 focus:border-accent-orange focus:ring-1 focus:ring-accent-orange outline-none text-white transition-all"
+                    placeholder="Project image URL"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-300 mb-1">Live URL</label>
+                    <input
+                      type="text"
+                      name="live_url"
+                      value={projectForm.live_url}
+                      onChange={handleProjectFormChange}
+                      className="w-full px-4 py-2.5 bg-primary-blue rounded-lg border border-slate-700 focus:border-accent-orange focus:ring-1 focus:ring-accent-orange outline-none text-white transition-all"
+                      placeholder="Live demo URL"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-300 mb-1">Repo URL</label>
+                    <input
+                      type="text"
+                      name="repo_url"
+                      value={projectForm.repo_url}
+                      onChange={handleProjectFormChange}
+                      className="w-full px-4 py-2.5 bg-primary-blue rounded-lg border border-slate-700 focus:border-accent-orange focus:ring-1 focus:ring-accent-orange outline-none text-white transition-all"
+                      placeholder="Repository URL"
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="featured"
+                    checked={projectForm.featured}
+                    onChange={handleProjectFormChange}
+                    className="h-4 w-4 text-accent-orange bg-primary-blue border-slate-700 rounded focus:ring-accent-orange focus:ring-1"
+                  />
+                  <label className="ml-2 block text-sm font-medium text-slate-300">
+                    Featured Project
+                  </label>
+                </div>
+                
+                <div className="flex justify-end gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={closeProjectModal}
+                    className="px-4 py-2.5 bg-slate-600 hover:bg-slate-700 text-white font-medium rounded-lg transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2.5 bg-accent-orange hover:bg-accent-hover text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-accent-orange/30"
+                  >
+                    {currentEditingProject ? "Update Project" : "Add Project"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Skill Modal */}
+      {isSkillModalOpen && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-primary-light rounded-2xl border border-slate-700 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-white">
+                  {currentEditingSkill ? "Edit Skill" : "Add New Skill"}
+                </h3>
+                <button 
+                  onClick={closeSkillModal}
+                  className="text-slate-400 hover:text-white transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <form onSubmit={submitSkillForm} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-300 mb-1">Skill Name *</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={skillForm.name}
+                    onChange={handleSkillFormChange}
+                    className="w-full px-4 py-2.5 bg-primary-blue rounded-lg border border-slate-700 focus:border-accent-orange focus:ring-1 focus:ring-accent-orange outline-none text-white transition-all"
+                    placeholder="Skill name (e.g. Next.js, Laravel, Python)"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-slate-300 mb-1">Category *</label>
+                  <select
+                    name="category"
+                    value={skillForm.category}
+                    onChange={handleSkillFormChange}
+                    className="w-full px-4 py-2.5 bg-primary-blue rounded-lg border border-slate-700 focus:border-accent-orange focus:ring-1 focus:ring-accent-orange outline-none text-white transition-all"
+                    required
+                  >
+                    {skillCategories.map(category => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-slate-300 mb-1">Icon Name *</label>
+                  <input
+                    type="text"
+                    name="icon_name"
+                    value={skillForm.icon_name}
+                    onChange={handleSkillFormChange}
+                    className="w-full px-4 py-2.5 bg-primary-blue rounded-lg border border-slate-700 focus:border-accent-orange focus:ring-1 focus:ring-accent-orange outline-none text-white transition-all"
+                    placeholder="Icon name (e.g. SiNextdotjs, SiLaravel, FaBrain)"
+                    required
+                  />
+                  <p className="mt-1 text-xs text-slate-400">Enter the icon name that corresponds to the icon mapping in the About page</p>
+                </div>
+                
+                <div className="flex justify-end gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={closeSkillModal}
+                    className="px-4 py-2.5 bg-slate-600 hover:bg-slate-700 text-white font-medium rounded-lg transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2.5 bg-accent-orange hover:bg-accent-hover text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-accent-orange/30"
+                  >
+                    {currentEditingSkill ? "Update Skill" : "Add Skill"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Experience Modal */}
+      {isExperienceModalOpen && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-primary-light rounded-2xl border border-slate-700 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-white">
+                  {currentEditingExperience ? "Edit Experience" : "Add New Experience"}
+                </h3>
+                <button 
+                  onClick={closeExperienceModal}
+                  className="text-slate-400 hover:text-white transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <form onSubmit={submitExperienceForm} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-300 mb-1">Role / Position *</label>
+                    <input
+                      type="text"
+                      name="role"
+                      value={experienceForm.role}
+                      onChange={handleExperienceFormChange}
+                      className="w-full px-4 py-2.5 bg-primary-blue rounded-lg border border-slate-700 focus:border-accent-orange focus:ring-1 focus:ring-accent-orange outline-none text-white transition-all"
+                      placeholder="Fullstack Web Developer, Coordinator of Student Affairs"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-300 mb-1">Company / Organization *</label>
+                    <input
+                      type="text"
+                      name="company"
+                      value={experienceForm.company}
+                      onChange={handleExperienceFormChange}
+                      className="w-full px-4 py-2.5 bg-primary-blue rounded-lg border border-slate-700 focus:border-accent-orange focus:ring-1 focus:ring-accent-orange outline-none text-white transition-all"
+                      placeholder="Dinas Pariwisata, BEM KM UMRAH"
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-slate-300 mb-1">Location *</label>
+                  <input
+                    type="text"
+                    name="location"
+                    value={experienceForm.location}
+                    onChange={handleExperienceFormChange}
+                    className="w-full px-4 py-2.5 bg-primary-blue rounded-lg border border-slate-700 focus:border-accent-orange focus:ring-1 focus:ring-accent-orange outline-none text-white transition-all"
+                    placeholder="Tanjungpinang, Riau Islands"
+                    required
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-300 mb-1">Start Date *</label>
+                    <input
+                      type="date"
+                      name="start_date"
+                      value={experienceForm.start_date}
+                      onChange={handleExperienceFormChange}
+                      className="w-full px-4 py-2.5 bg-primary-blue rounded-lg border border-slate-700 focus:border-accent-orange focus:ring-1 focus:ring-accent-orange outline-none text-white transition-all"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-300 mb-1">End Date</label>
+                    <input
+                      type="date"
+                      name="end_date"
+                      value={experienceForm.end_date}
+                      onChange={handleExperienceFormChange}
+                      className={`w-full px-4 py-2.5 bg-primary-blue rounded-lg border border-slate-700 focus:border-accent-orange focus:ring-1 focus:ring-accent-orange outline-none text-white transition-all ${
+                        experienceForm.is_current ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                      disabled={experienceForm.is_current}
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="is_current"
+                    checked={experienceForm.is_current}
+                    onChange={handleExperienceFormChange}
+                    className="h-4 w-4 text-accent-orange bg-primary-blue border-slate-700 rounded focus:ring-accent-orange focus:ring-1"
+                  />
+                  <label className="ml-2 block text-sm font-medium text-slate-300">
+                    Currently work here
+                  </label>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-slate-300 mb-1">Description *</label>
+                  <textarea
+                    name="description"
+                    value={experienceForm.description}
+                    onChange={handleExperienceFormChange}
+                    className="w-full px-4 py-2.5 bg-primary-blue rounded-lg border border-slate-700 focus:border-accent-orange focus:ring-1 focus:ring-accent-orange outline-none text-white transition-all min-h-[100px]"
+                    placeholder="Write details about your responsibilities, achievements, or tasks..."
+                    required
+                  />
+                </div>
+                
+                <div className="flex justify-end gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={closeExperienceModal}
+                    className="px-4 py-2.5 bg-slate-600 hover:bg-slate-700 text-white font-medium rounded-lg transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2.5 bg-accent-orange hover:bg-accent-hover text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-accent-orange/30"
+                  >
+                    {currentEditingExperience ? "Update Experience" : "Add Experience"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Certificate Modal */}
+      {isCertificateModalOpen && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-primary-light rounded-2xl border border-slate-700 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-white">
+                  {currentEditingCertificate ? "Edit Certificate" : "Add New Certificate"}
+                </h3>
+                <button 
+                  onClick={closeCertificateModal}
+                  className="text-slate-400 hover:text-white transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <form onSubmit={submitCertificateForm} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-300 mb-1">Certificate Title *</label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={certificateForm.title}
+                    onChange={handleCertificateFormChange}
+                    className="w-full px-4 py-2.5 bg-primary-blue rounded-lg border border-slate-700 focus:border-accent-orange focus:ring-1 focus:ring-accent-orange outline-none text-white transition-all"
+                    placeholder="AWS Certified Developer, Google Analytics Individual Qualification"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-slate-300 mb-1">Credential Provider *</label>
+                  <input
+                    type="text"
+                    name="credential_provider"
+                    value={certificateForm.credential_provider}
+                    onChange={handleCertificateFormChange}
+                    className="w-full px-4 py-2.5 bg-primary-blue rounded-lg border border-slate-700 focus:border-accent-orange focus:ring-1 focus:ring-accent-orange outline-none text-white transition-all"
+                    placeholder="Amazon Web Services, Google, Microsoft"
+                    required
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-300 mb-1">Issue Date *</label>
+                    <input
+                      type="date"
+                      name="issue_date"
+                      value={certificateForm.issue_date}
+                      onChange={handleCertificateFormChange}
+                      className="w-full px-4 py-2.5 bg-primary-blue rounded-lg border border-slate-700 focus:border-accent-orange focus:ring-1 focus:ring-accent-orange outline-none text-white transition-all"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-300 mb-1">Credential URL</label>
+                    <input
+                      type="url"
+                      name="credential_url"
+                      value={certificateForm.credential_url}
+                      onChange={handleCertificateFormChange}
+                      className="w-full px-4 py-2.5 bg-primary-blue rounded-lg border border-slate-700 focus:border-accent-orange focus:ring-1 focus:ring-accent-orange outline-none text-white transition-all"
+                      placeholder="https://www.credly.com/path/to/certificate"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-slate-300 mb-1">Image URL</label>
+                  <input
+                    type="text"
+                    name="image_url"
+                    value={certificateForm.image_url}
+                    onChange={handleCertificateFormChange}
+                    className="w-full px-4 py-2.5 bg-primary-blue rounded-lg border border-slate-700 focus:border-accent-orange focus:ring-1 focus:ring-accent-orange outline-none text-white transition-all"
+                    placeholder="https://example.com/certificate-image.png"
+                  />
+                </div>
+                
+                <div className="flex justify-end gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={closeCertificateModal}
+                    className="px-4 py-2.5 bg-slate-600 hover:bg-slate-700 text-white font-medium rounded-lg transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2.5 bg-accent-orange hover:bg-accent-hover text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-accent-orange/30"
+                  >
+                    {currentEditingCertificate ? "Update Certificate" : "Add Certificate"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
