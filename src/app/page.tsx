@@ -45,11 +45,11 @@ export default function Home() {
       <section className="flex flex-col items-center justify-center pt-32 pb-24 px-6 text-center">
         <div className="relative w-40 h-40 md:w-48 md:h-48 mb-8 rounded-full overflow-hidden border-4 border-accent-orange shadow-[0_0_30px_rgba(249,115,22,0.2)]">
           <Image
-            src="/profile.jpg"
+            src="/img/about.jpg"
             alt="Rifqy's Portrait"
             fill
-            className="object-cover"
-            priority
+            sizes="(max-width: 768px) 160px, 192px"
+            className="object-cover object-center" 
           />
         </div>
         <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-4 tracking-tight">

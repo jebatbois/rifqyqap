@@ -56,7 +56,7 @@ Refer to the original SQL schema definitions for tables (`skills`, `experiences`
 ## Page-Specific Guidelines
 
 ### Home (`/`):
-- **Hero:** Profile image (profile.jpg), Name, English tagline.
+- **Hero:** Profile image (`public/profile.jpg`), Name, English tagline. *(Updated to reflect actual image used)*
 - **Tech Icons Marquee:** Infinite scroll from `react-icons/si`. Pause on hover. Glow effect on tech icons.
 - **"What Can I Offer" Cards:** Lottie animations discarded; use **Mouse-Follow Glow** and **Monospace Tech Keywords** version.
 

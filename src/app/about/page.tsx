@@ -126,7 +126,7 @@ export default function About() {
         <section className="flex flex-col md:flex-row items-center gap-12 pt-16 border-b border-slate-800/50 pb-16">
           {/* Foto Profil Kecil di Sebelah Kiri */}
           <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-accent-orange shadow-lg shadow-accent-orange/30 flex-shrink-0">
-            <Image src="/profile.jpg" alt="Rifqy's Portrait" fill className="object-cover" />
+            <Image src="/img/profile.jpg" alt="Rifqy's Portrait" fill className="object-cover object-center" />
           </div>
           {/* Nama Saya dan Deskripsi Singkat */}
           <div className="flex-1 text-center md:text-left space-y-4">
@@ -178,11 +178,11 @@ export default function About() {
             <h2 className="text-3xl md:text-4xl font-bold text-white">Professional Journey</h2>
           </div>
           {/* Wadah Pohon Timeline */}
-          <div className="relative pl-8 md:pl-12 border-l-2 border-slate-700 space-y-12 w-full max-w-4xl mx-auto">
+          <div className="relative pl-10 md:pl-16 border-l-2 border-slate-700 space-y-12 w-full max-w-4xl mx-auto">
             {experiences.map(exp => (
               <div key={exp.id} className="group relative w-full">
-                {/* Titik Timeline Pohon (Aksen Oranye) */}
-                <div className="absolute -left-[41px] md:-left-[53px] top-1.5 w-6 h-6 bg-primary-light rounded-full border-4 border-accent-orange z-10 shadow-lg shadow-accent-orange/30 group-hover:scale-110 group-hover:bg-accent-orange group-hover:shadow-accent-orange/60 transition-all duration-300"></div>
+                {/* Titik Timeline Pohon (Aksen Oranje) */}
+                <div className="absolute left-0 top-1.5 w-6 h-6 bg-primary-light rounded-full border-4 border-accent-orange z-10 shadow-lg shadow-accent-orange/30 group-hover:scale-110 group-hover:bg-accent-orange group-hover:shadow-accent-orange/60 transition-all duration-300 -translate-x-1/2"></div>
                 {/* Konten Timeline */}
                 <div className="relative bg-primary-light p-6 rounded-2xl border border-slate-700 transition-all duration-500 hover:border-accent-orange/50 hover:shadow-lg hover:shadow-accent-orange/15 w-full space-y-3">
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1.5 md:gap-4 w-full">
