@@ -1,53 +1,48 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-// Ubah import dari 'si' menjadi 'fa' (FontAwesome)
-import { FaGithub, FaLinkedin, FaInstagram } from "react-icons/fa";
+import { SiGithub, SiInstagram } from "react-icons/si";
+import { FaLinkedin } from "react-icons/fa";
 
 export default function Footer() {
-  const pathname = usePathname();
-  
-  // Hide footer di admin page
-  if (pathname.startsWith("/admin")) {
-    return null;
-  }
-
-  const currentYear = new Date().getFullYear();
-
   return (
-    <footer className="w-full bg-primary-blue border-t border-slate-800/50 py-10 mt-auto">
-      <div className="max-w-5xl mx-auto px-6 flex flex-col items-center">
+    <footer className="bg-primary-blue border-t border-slate-800/50 py-8 px-6">
+      <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+        {/* Copyright Text */}
+        <p className="text-sm text-slate-400">© {new Date().getFullYear()} Rifqy Athaya Prayuda. All rights reserved.</p>
         
-     {/* Social Media Links */}
-        <div className="flex gap-6 mb-8">
-          <Link href="https://github.com/" target="_blank" className="text-slate-400 hover:text-accent-orange transition-colors duration-300">
-            <span className="sr-only">GitHub</span>
-            <FaGithub className="w-6 h-6" />
+        {/* Social Links */}
+        <div className="flex items-center gap-6">
+          <Link 
+            href="https://github.com/jebatbois" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-slate-400 hover:text-accent-orange transition-all duration-300 hover:scale-110"
+          >
+            <SiGithub className="w-5 h-5" />
           </Link>
-          <Link href="https://linkedin.com/" target="_blank" className="text-slate-400 hover:text-accent-orange transition-colors duration-300">
-            <span className="sr-only">LinkedIn</span>
-            <FaLinkedin className="w-6 h-6" />
+          <Link 
+            href="https://www.linkedin.com/in/rifqy-athaya-prayuda-264212274" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-slate-400 hover:text-accent-orange transition-all duration-300 hover:scale-110"
+          >
+            <FaLinkedin className="w-5 h-5" />
           </Link>
-          <Link href="https://instagram.com/" target="_blank" className="text-slate-400 hover:text-accent-orange transition-colors duration-300">
-            <span className="sr-only">Instagram</span>
-            <FaInstagram className="w-6 h-6" />
+          <Link 
+            href="https://www.instagram.com/rifqyatpray/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-slate-400 hover:text-accent-orange transition-all duration-300 hover:scale-110"
+          >
+            <SiInstagram className="w-5 h-5" />
           </Link>
         </div>
-
-        {/* Signature Line */}
-        <div className="text-center space-y-2">
-          <p className="text-slate-300 font-medium text-lg tracking-wide">
-            Rifqy
-          </p>
-          <p className="text-slate-500 text-sm">
-            Crafted with <span className="text-accent-orange">O</span> in Tanjungpinang
-          </p>
-          <p className="text-slate-600 text-xs mt-4">
-            &copy; {currentYear} All rights reserved.
-          </p>
-        </div>
-        
+      </div>
+      
+      {/* Location Text */}
+      <div className="mt-6 text-center text-sm text-slate-400">
+        Crafted with ☕ and 💡 in Tanjungpinang
       </div>
     </footer>
   );
