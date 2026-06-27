@@ -19,6 +19,7 @@ export default function Contact() {
 
   // State feedback
   const [status, setStatus] = useState<null | "submitting" | "success" | "error">(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Handle perubahan input
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -30,19 +31,29 @@ export default function Contact() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus("submitting");
+    setErrorMessage(null);
 
-    // Lakukan INSERT ke Supabase
-    const { error } = await supabase.from("messages").insert([
-      { name: formData.name, email: formData.email, message: formData.message, is_read: false }
-    ]);
+    try {
+      const { data, error } = await supabase.from("messages").insert([
+        { name: formData.name, email: formData.email, message: formData.message, is_read: false }
+      ]).select();
 
-    if (error) {
-      console.error("Error:", error);
-      setStatus("error");
-    } else {
+      if (error) {
+        throw error;
+      }
+
+      if (!data || (Array.isArray(data) && data.length === 0)) {
+        throw new Error("Message was not saved.");
+      }
+
       setStatus("success");
       setFormData({ name: "", email: "", message: "" });
       setTimeout(() => setStatus(null), 5000);
+    } catch (err: any) {
+      const message = err?.message || JSON.stringify(err) || "Unknown error occurred.";
+      console.error("Send message error:", err);
+      setErrorMessage(message);
+      setStatus("error");
     }
   };
 
@@ -113,6 +124,9 @@ export default function Contact() {
                     {/* feedback tombol */}
                     {getButtonContent()}
                   </button>
+                  {errorMessage && (
+                    <p className="mt-3 text-sm text-red-300">Error: {errorMessage}</p>
+                  )}
                </div>
              </form>
           </section>

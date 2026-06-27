@@ -24,6 +24,7 @@ interface Project {
   description: string;
   tech_stack: string[];
   image_url: string;
+  image_urls: string[];
   live_url: string;
   repo_url: string;
   featured: boolean;
@@ -84,10 +85,13 @@ export default function AdminPage() {
     description: "",
     tech_stack: "",
     image_url: "",
+    image_urls: [] as string[],
     live_url: "",
     repo_url: "",
     featured: false
   });
+  const [selectedProjectImages, setSelectedProjectImages] = useState<File[]>([]);
+  const [previewProjectImages, setPreviewProjectImages] = useState<string[]>([]);
 
   // --- Skills States ---
   const [skills, setSkills] = useState<Skill[]>([]);
@@ -128,6 +132,8 @@ export default function AdminPage() {
     credential_url: "",
     image_url: ""
   });
+  const [selectedCertificateImage, setSelectedCertificateImage] = useState<File | null>(null);
+  const [previewCertificateImage, setPreviewCertificateImage] = useState<string | null>(null);
 
   // Static categories for skills
   const skillCategories = [
@@ -140,6 +146,41 @@ export default function AdminPage() {
     'data & machine learning', 
     'soft skills'
   ];
+
+  // Helper function to upload image to Supabase Storage
+  const uploadImage = async (file: File, folder: string): Promise<string | null> => {
+    if (!file) return null;
+
+    try {
+      // Generate unique filename
+      const fileName = `${folder}/${Date.now()}_${file.name}`;
+      
+      // Upload file to Supabase storage
+      const { data, error } = await supabase
+        .storage
+        .from('portfolio-assets')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      // Get public URL for the uploaded file
+      const { data: { publicUrl } } = supabase
+        .storage
+        .from('portfolio-assets')
+        .getPublicUrl(fileName);
+
+      return publicUrl;
+    } catch (error: any) {
+      console.error("Error uploading image:", error.message);
+      alert(`Error uploading image: ${error.message}`);
+      return null;
+    }
+  };
 
   // Cek sesi login saat halaman dimuat
   useEffect(() => {
@@ -169,6 +210,46 @@ export default function AdminPage() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // --- TAMBAHKAN KODE INI: Auto Logout (Inactivity Timer) ---
+  useEffect(() => {
+    // Hanya jalankan timer jika admin sedang login
+    if (!session) return;
+
+    let timeoutId: NodeJS.Timeout;
+
+    // Waktu tunggu sebelum auto-logout (Contoh: 15 Menit)
+    // 15 menit * 60 detik * 1000 milidetik = 900000 ms
+    const INACTIVITY_LIMIT = 15 * 60 * 1000; 
+
+    const resetTimer = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        handleLogout();
+        alert("Sesi kamu telah berakhir karena tidak ada aktivitas. Silakan login kembali untuk keamanan.");
+      }, INACTIVITY_LIMIT);
+    };
+
+    // Daftar aktivitas yang dianggap "sedang aktif"
+    const activityEvents = ["mousemove", "keydown", "mousedown", "scroll", "touchstart"];
+    
+    // Pasang 'pendengar' untuk setiap aktivitas
+    activityEvents.forEach((event) => {
+      window.addEventListener(event, resetTimer);
+    });
+
+    // Mulai timer pertama kali
+    resetTimer();
+
+    // Bersihkan event listener jika komponen di-unmount atau user logout
+    return () => {
+      clearTimeout(timeoutId);
+      activityEvents.forEach((event) => {
+        window.removeEventListener(event, resetTimer);
+      });
+    };
+  }, [session]); 
+  // --- AKHIR KODE TAMBAHAN ---
 
   // Fetch messages when activeTab changes to 'messages'
   useEffect(() => {
@@ -358,6 +439,32 @@ export default function AdminPage() {
     }
   };
 
+  // Function to handle project image selection
+  const handleProjectImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      setSelectedProjectImages(files);
+      
+      // Create previews for selected images
+      const newPreviews = files.map(file => URL.createObjectURL(file));
+      setPreviewProjectImages(newPreviews);
+    }
+  };
+
+  // Function to remove a selected image
+  const removeSelectedImage = (index: number) => {
+    const newSelectedImages = [...selectedProjectImages];
+    newSelectedImages.splice(index, 1);
+    setSelectedProjectImages(newSelectedImages);
+    
+    // Revoke the object URL to free memory
+    URL.revokeObjectURL(previewProjectImages[index]);
+    
+    const newPreviews = [...previewProjectImages];
+    newPreviews.splice(index, 1);
+    setPreviewProjectImages(newPreviews);
+  };
+
   // Function to handle skill form input changes
   const handleSkillFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -375,10 +482,13 @@ export default function AdminPage() {
       description: "",
       tech_stack: "",
       image_url: "",
+      image_urls: [],
       live_url: "",
       repo_url: "",
       featured: false
     });
+    setSelectedProjectImages([]);
+    setPreviewProjectImages([]);
     setIsProjectModalOpen(true);
   };
 
@@ -390,10 +500,13 @@ export default function AdminPage() {
       description: project.description,
       tech_stack: Array.isArray(project.tech_stack) ? project.tech_stack.join(', ') : project.tech_stack,
       image_url: project.image_url,
+      image_urls: project.image_urls || [],
       live_url: project.live_url,
       repo_url: project.repo_url,
       featured: project.featured
     });
+    setSelectedProjectImages([]);
+    setPreviewProjectImages(project.image_urls || []);
     setIsProjectModalOpen(true);
   };
 
@@ -428,10 +541,13 @@ export default function AdminPage() {
       description: "",
       tech_stack: "",
       image_url: "",
+      image_urls: [],
       live_url: "",
       repo_url: "",
       featured: false
     });
+    setSelectedProjectImages([]);
+    setPreviewProjectImages([]);
   };
 
   // Function to close skill modal
@@ -464,6 +580,18 @@ export default function AdminPage() {
       // Parse tech stack as array
       const techStackArray = projectForm.tech_stack.split(',').map(tag => tag.trim()).filter(tag => tag);
       
+      let imageUrls: string[] = [];
+      
+      // If new images were selected, upload them to Supabase
+      if (selectedProjectImages.length > 0) {
+        const uploadPromises = selectedProjectImages.map(file => uploadImage(file, 'projects'));
+        const uploadedUrls = await Promise.all(uploadPromises);
+        imageUrls = uploadedUrls.filter(url => url !== null) as string[];
+      } else {
+        // Keep existing image URLs if no new images were selected
+        imageUrls = projectForm.image_urls;
+      }
+      
       if (currentEditingProject) {
         // Update existing project
         const { error } = await supabase
@@ -472,7 +600,7 @@ export default function AdminPage() {
             title: projectForm.title,
             description: projectForm.description,
             tech_stack: techStackArray,
-            image_url: projectForm.image_url,
+            image_urls: imageUrls,
             live_url: projectForm.live_url,
             repo_url: projectForm.repo_url,
             featured: projectForm.featured
@@ -490,7 +618,7 @@ export default function AdminPage() {
             title: projectForm.title,
             description: projectForm.description,
             tech_stack: techStackArray,
-            image_url: projectForm.image_url,
+            image_urls: imageUrls,
             live_url: projectForm.live_url,
             repo_url: projectForm.repo_url,
             featured: projectForm.featured
@@ -568,6 +696,8 @@ export default function AdminPage() {
       alert(`Error saving skill: ${error.message}`);
     }
   };
+
+  
 
   // Function to delete project
   const deleteProject = async (id: number) => {
@@ -795,6 +925,15 @@ export default function AdminPage() {
     }));
   };
 
+  // Function to handle certificate image selection
+  const handleCertificateImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedCertificateImage(file);
+      setPreviewCertificateImage(URL.createObjectURL(file));
+    }
+  };
+
   // Function to open modal for adding new certificate
   const openNewCertificateModal = () => {
     setCurrentEditingCertificate(null);
@@ -805,6 +944,8 @@ export default function AdminPage() {
       credential_url: "",
       image_url: ""
     });
+    setSelectedCertificateImage(null);
+    setPreviewCertificateImage(null);
     setIsCertificateModalOpen(true);
   };
 
@@ -818,6 +959,8 @@ export default function AdminPage() {
       credential_url: certificate.credential_url,
       image_url: certificate.image_url || ""
     });
+    setSelectedCertificateImage(null);
+    setPreviewCertificateImage(certificate.image_url);
     setIsCertificateModalOpen(true);
   };
 
@@ -832,6 +975,8 @@ export default function AdminPage() {
       credential_url: "",
       image_url: ""
     });
+    setSelectedCertificateImage(null);
+    setPreviewCertificateImage(null);
   };
 
   // Function to submit certificate form
@@ -855,6 +1000,16 @@ export default function AdminPage() {
         return;
       }
       
+      let imageUrl = certificateForm.image_url || null;
+      
+      // If a new image was selected, upload it to Supabase
+      if (selectedCertificateImage) {
+        imageUrl = await uploadImage(selectedCertificateImage, 'certificates');
+        if (!imageUrl) {
+          return; // Error already shown in uploadImage function
+        }
+      }
+      
       if (currentEditingCertificate) {
         // Update existing certificate
         const { error } = await supabase
@@ -864,7 +1019,7 @@ export default function AdminPage() {
             credential_provider: certificateForm.credential_provider,
             issue_date: certificateForm.issue_date,
             credential_url: certificateForm.credential_url,
-            image_url: certificateForm.image_url || null
+            image_url: imageUrl
           })
           .eq('id', currentEditingCertificate.id);
 
@@ -880,7 +1035,7 @@ export default function AdminPage() {
             credential_provider: certificateForm.credential_provider,
             issue_date: certificateForm.issue_date,
             credential_url: certificateForm.credential_url,
-            image_url: certificateForm.image_url || null
+            image_url: imageUrl
           }]);
 
         if (error) throw error;
@@ -1536,16 +1691,42 @@ export default function AdminPage() {
                   />
                 </div>
                 
+                {/* Multi-Image Upload Section */}
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-1">Image URL</label>
-                  <input
-                    type="text"
-                    name="image_url"
-                    value={projectForm.image_url}
-                    onChange={handleProjectFormChange}
-                    className="w-full px-4 py-2.5 bg-primary-blue rounded-lg border border-slate-700 focus:border-accent-orange focus:ring-1 focus:ring-accent-orange outline-none text-white transition-all"
-                    placeholder="Project image URL"
-                  />
+                  <label className="block text-sm font-semibold text-slate-300 mb-1">Project Images</label>
+                  <div className="space-y-2">
+                    {/* Preview thumbnails */}
+                    {previewProjectImages.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {previewProjectImages.map((preview, index) => (
+                          <div key={index} className="relative group">
+                            <img 
+                              src={preview} 
+                              alt={`Preview ${index}`} 
+                              className="max-h-20 object-contain rounded-lg border border-slate-600"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeSelectedImage(index)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* File input */}
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleProjectImageChange}
+                      className="w-full px-4 py-2.5 bg-primary-blue rounded-lg border border-slate-700 focus:border-accent-orange focus:ring-1 focus:ring-accent-orange outline-none text-white transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-accent-orange file:text-white hover:file:bg-accent-hover"
+                    />
+                    <p className="text-xs text-slate-400">Supported formats: JPG, PNG, WEBP. Maximum size: 5MB. Hold Ctrl/Cmd to select multiple files.</p>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1892,16 +2073,27 @@ export default function AdminPage() {
                   </div>
                 </div>
                 
+                {/* Image Upload Section */}
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-1">Image URL</label>
-                  <input
-                    type="text"
-                    name="image_url"
-                    value={certificateForm.image_url}
-                    onChange={handleCertificateFormChange}
-                    className="w-full px-4 py-2.5 bg-primary-blue rounded-lg border border-slate-700 focus:border-accent-orange focus:ring-1 focus:ring-accent-orange outline-none text-white transition-all"
-                    placeholder="https://example.com/certificate-image.png"
-                  />
+                  <label className="block text-sm font-semibold text-slate-300 mb-1">Certificate Image</label>
+                  <div className="space-y-2">
+                    {previewCertificateImage && (
+                      <div className="flex justify-center">
+                        <img 
+                          src={previewCertificateImage} 
+                          alt="Preview" 
+                          className="max-h-40 object-contain rounded-lg border border-slate-600"
+                        />
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleCertificateImageChange}
+                      className="w-full px-4 py-2.5 bg-primary-blue rounded-lg border border-slate-700 focus:border-accent-orange focus:ring-1 focus:ring-accent-orange outline-none text-white transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-accent-orange file:text-white hover:file:bg-accent-hover"
+                    />
+                    <p className="text-xs text-slate-400">Supported formats: JPG, PNG, WEBP. Maximum size: 5MB.</p>
+                  </div>
                 </div>
                 
                 <div className="flex justify-end gap-3 pt-4">

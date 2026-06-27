@@ -11,6 +11,17 @@ import { X, ExternalLink, Zap, FolderHeart, Layout, CalendarDays, Code } from "l
 // Gunakan koleksi Fa (FontAwesome) untuk Github agar konsisten dengan Footer
 import { FaGithub } from "react-icons/fa"; 
 
+// Add custom styles for hiding scrollbar
+const style = `
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+`;
+
 // --- Interface untuk data Proyek dari Supabase ---
 interface Project {
   id: number;
@@ -18,6 +29,7 @@ interface Project {
   description: string;
   tech_stack: string[]; // Array teks untuk menyimpan list teknologi
   image_url: string | null;
+  image_urls: string[]; // New field for multiple images
   live_url: string | null;
   repo_url: string | null;
   featured: boolean;
@@ -29,87 +41,104 @@ const Modal = ({ project, onClose }: { project: Project; onClose: () => void }) 
   if (!project) return null;
 
   return (
-    // Wadah Backdrop (Latar belakang transparan blur)
-    <div className="fixed inset-0 z-[100] flex items-center justify-center pt-24 px-4 bg-primary-blue/90 backdrop-blur-sm transition-opacity duration-300" onClick={onClose}>
-      
-      {/* Wadah Modal Card (Gaya modern, dark navy, border glow) */}
-      <div className="relative bg-primary-light p-8 md:p-12 rounded-3xl border border-slate-700 shadow-[0_0_50px_rgba(249,115,22,0.3)] w-full max-w-4xl max-h-[90vh] overflow-y-auto space-y-8 flex flex-col md:flex-row gap-8 md:gap-12 transition-all duration-300 group" onClick={(e) => e.stopPropagation() /* Mencegah modal menutup saat konten diklik */}>
+    <>
+      <style>{style}</style>
+      {/* Wadah Backdrop (Latar belakang transparan blur) */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6 bg-slate-950/80 backdrop-blur-sm" onClick={onClose}>
         
-        {/* Tombol Close (Pojok kanan atas) */}
-        <button onClick={onClose} className="absolute top-6 right-6 text-slate-500 hover:text-accent-orange transition-colors duration-300 z-10">
-          <X className="w-6 h-6" />
-        </button>
-
-        {/* --- Bagian Kiri Modal (Visual Proyek) --- */}
-        <div className="flex-1 space-y-6 w-full">
-          <div className="relative aspect-video rounded-xl overflow-hidden border border-slate-800 shadow-inner w-full flex flex-col justify-center items-center">
-            {project.image_url ? (
-              <Image src={project.image_url} alt={project.title} fill className="object-cover" />
-            ) : (
-              // Ikon generik jika tidak ada gambar
-              <div className="w-full h-full flex flex-col justify-center items-center bg-primary-blue/50">
-                <FolderHeart className="w-20 h-20 text-accent-orange opacity-40 mb-4" />
-                <p className="text-slate-600 text-sm">Visual preview not available</p>
-              </div>
-            )}
-            {/* Efek Internal Glint Layer (Copy dari Home) */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-          </div>
+        {/* Wadah Modal Card (Gaya modern, dark navy, border glow) */}
+        <div className="relative bg-primary-light p-8 md:p-12 rounded-3xl border border-slate-700 shadow-[0_0_50px_rgba(249,115,22,0.3)] w-full max-w-4xl max-h-[90vh] overflow-y-auto space-y-8 flex flex-col md:flex-row gap-8 md:gap-12 transition-all duration-300 group" onClick={(e) => e.stopPropagation() /* Mencegah modal menutup saat konten diklik */}>
           
-          {/* Detail Metadata (Dibuat minimalis seperti halaman About) */}
-          <div className="flex items-center gap-6 text-sm text-slate-400 border-t border-slate-700/50 pt-4 w-full">
-            <span className="flex items-center gap-1.5 whitespace-nowrap"><FolderHeart className="w-4 h-4 text-slate-600"/>{project.featured ? "Featured" : "Personal"}</span>
-            <span className="flex items-center gap-1.5 whitespace-nowrap"><CalendarDays className="w-4 h-4 text-slate-600"/>{project.created_at.split('T')[0]}</span>
-          </div>
-        </div>
+          {/* Tombol Close (Pojok kanan atas) */}
+          <button onClick={onClose} className="absolute top-6 right-6 text-slate-500 hover:text-accent-orange transition-colors duration-300 z-10">
+            <X className="w-6 h-6" />
+          </button>
 
-        {/* --- Bagian Kanan Modal (Informasi Lengkap Proyek) --- */}
-        <div className="flex-1 space-y-8 w-full">
-          <div className="space-y-3 w-full">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight leading-tight">
-              {project.title}
-            </h2>
-            <div className="flex items-center gap-1.5">
-              <Zap className="w-4 h-4 text-accent-orange"/>
-              <p className="text-base font-semibold text-accent-orange whitespace-pre-line text-left leading-relaxed">Scalable Digital Product & Machine Learning Integration</p>
+          {/* --- Bagian Kiri Modal (Visual Proyek) --- */}
+          <div className="flex-1 space-y-6 w-full">
+            {/* Multi-Image Gallery */}
+            <div className="relative aspect-video rounded-xl overflow-hidden border border-slate-800 w-full flex flex-col justify-center items-center">
+              {project.image_urls && project.image_urls.length > 0 ? (
+                <div className="flex overflow-x-auto gap-4 snap-x snap-mandatory hide-scrollbar w-full h-full">
+                  {project.image_urls.map((imageUrl, index) => (
+                    <div key={index} className="w-full flex-shrink-0 snap-center relative">
+                      <Image 
+                        src={imageUrl} 
+                        alt={`${project.title} - Image ${index + 1}`} 
+                        fill 
+                        className="object-cover" 
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : project.image_url ? (
+                <Image src={project.image_url} alt={project.title} fill className="object-cover" />
+              ) : (
+                // Ikon generik jika tidak ada gambar
+                <div className="w-full h-full flex flex-col justify-center items-center bg-primary-blue/50">
+                  <FolderHeart className="w-20 h-20 text-accent-orange opacity-40 mb-4" />
+                  <p className="text-slate-600 text-sm">Visual preview not available</p>
+                </div>
+              )}
+              {/* Efek Internal Glint Layer (Copy dari Home) */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+            </div>
+            
+            {/* Detail Metadata (Dibuat minimalis seperti halaman About) */}
+            <div className="flex items-center gap-6 text-sm text-slate-400 border-t border-slate-700/50 pt-4 w-full">
+              <span className="flex items-center gap-1.5 whitespace-nowrap"><FolderHeart className="w-4 h-4 text-slate-600"/>{project.featured ? "Featured" : "Personal"}</span>
+              <span className="flex items-center gap-1.5 whitespace-nowrap"><CalendarDays className="w-4 h-4 text-slate-600"/>{project.created_at.split('T')[0]}</span>
             </div>
           </div>
 
-          <p className="text-slate-300 text-sm md:text-base leading-relaxed text-left pt-2">{project.description}</p>
-
-          {/* --- Tech Stack (Label Kecil dengan detail teknis) --- */}
-          <div className="space-y-3 w-full pt-2">
-            <div className="flex items-center gap-2">
-              <Code className="w-5 h-5 text-accent-orange"/>
-              <h4 className="text-lg font-bold text-white tracking-wide uppercase">Core Technologies</h4>
+          {/* --- Bagian Kanan Modal (Informasi Lengkap Proyek) --- */}
+          <div className="flex-1 space-y-8 w-full">
+            <div className="space-y-3 w-full">
+              <h2 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight leading-tight">
+                {project.title}
+              </h2>
+              <div className="flex items-center gap-1.5">
+                <Zap className="w-4 h-4 text-accent-orange"/>
+                <p className="text-base font-semibold text-accent-orange whitespace-pre-line text-left leading-relaxed">Scalable Digital Product & Machine Learning Integration</p>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2.5 w-full">
-              {project.tech_stack.map((tech, index) => (
-                <span key={index} className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-mono text-slate-300 bg-primary-blue rounded-full border border-slate-700 group-hover:border-accent-orange/20 transition-all">
-                  {tech}
-                </span>
-              ))}
-            </div>
-          </div>
 
-          {/* --- Call to Action (Tombol Link) --- */}
-          <div className="flex flex-wrap items-center gap-4 border-t border-slate-800 pt-8 mt-auto relative z-10 w-full">
-            {project.live_url && (
-              <Link href={project.live_url} target="_blank" className="group flex items-center gap-2.5 bg-accent-orange hover:bg-accent-hover text-white px-7 py-3 rounded-full font-semibold text-sm transition-all duration-300 shadow-lg hover:shadow-accent-orange/50">
-                Live Demo
-                <ExternalLink className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"/>
-              </Link>
-            )}
-            {project.repo_url && (
-              <Link href={project.repo_url} target="_blank" className="group flex items-center gap-2.5 text-slate-300 hover:text-white px-7 py-3 rounded-full font-semibold text-sm transition-all duration-300 border border-slate-700 hover:border-accent-orange shadow-lg hover:shadow-accent-orange/15">
-                <FaGithub className="w-4 h-4"/>
-                Github Repository
-              </Link>
-            )}
+            <p className="text-slate-300 text-sm md:text-base leading-relaxed text-left pt-2">{project.description}</p>
+
+            {/* --- Tech Stack (Label Kecil dengan detail teknis) --- */}
+            <div className="space-y-3 w-full pt-2">
+              <div className="flex items-center gap-2">
+                <Code className="w-5 h-5 text-accent-orange"/>
+                <h4 className="text-lg font-bold text-white tracking-wide uppercase">Core Technologies</h4>
+              </div>
+              <div className="flex flex-wrap gap-2.5 w-full">
+                {project.tech_stack.map((tech, index) => (
+                  <span key={index} className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-mono text-slate-300 bg-primary-blue rounded-full border border-slate-700 group-hover:border-accent-orange/20 transition-all">
+                    {tech}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* --- Call to Action (Tombol Link) --- */}
+            <div className="flex flex-wrap items-center gap-4 border-t border-slate-800 pt-8 mt-auto relative z-10 w-full">
+              {project.live_url && (
+                <Link href={project.live_url} target="_blank" className="group flex items-center gap-2.5 bg-accent-orange hover:bg-accent-hover text-white px-7 py-3 rounded-full font-semibold text-sm transition-all duration-300 shadow-lg hover:shadow-accent-orange/50">
+                  Live Demo
+                  <ExternalLink className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"/>
+                </Link>
+              )}
+              {project.repo_url && (
+                <Link href={project.repo_url} target="_blank" className="group flex items-center gap-2.5 text-slate-300 hover:text-white px-7 py-3 rounded-full font-semibold text-sm transition-all duration-300 border border-slate-700 hover:border-accent-orange shadow-lg hover:shadow-accent-orange/15">
+                  <FaGithub className="w-4 h-4"/>
+                  Github Repository
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
@@ -176,7 +205,9 @@ export default function Projects() {
                 
                 {/* Visual Preview (Mockup) */}
                 <div className="relative aspect-video rounded-xl overflow-hidden mb-6 border border-slate-800 w-full flex-shrink-0 flex justify-center items-center">
-                  {project.image_url ? (
+                  {project.image_urls && project.image_urls.length > 0 ? (
+                    <Image src={project.image_urls[0]} alt={project.title} fill className="object-cover" />
+                  ) : project.image_url ? (
                     <Image src={project.image_url} alt={project.title} fill className="object-cover" />
                   ) : (
                     // Ikon generik jika tidak ada gambar
